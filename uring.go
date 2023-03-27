@@ -46,3 +46,7 @@ func (h *IoUring) Submit() (int, error) {
 func (h *IoUring) SubmitAndWait(waitNr uint32) (int, error) {
 	return h.io_uring_submit_and_wait(waitNr)
 }
+
+func (h *IoUring) Advance(nr uint32) {
+	h.io_uring_cq_advance(nr)
+}

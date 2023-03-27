@@ -48,14 +48,10 @@ func PrepTimeoutUpdate(sqe *IoUringSqe, ts *syscall.Timespec, userData uint64, f
 func PrepRead(sqe *IoUringSqe, fd int, buf *byte, nb int, offset uint64) {
 	PrepRW(IORING_OP_READ, sqe, fd, unsafe.Pointer(buf), nb, offset)
 }
-func PrepReadv(sqe *IoUringSqe, fd int,
-	iov *syscall.Iovec, nrVecs int,
-	offset uint64) {
+func PrepReadv(sqe *IoUringSqe, fd int, iov *syscall.Iovec, nrVecs int, offset uint64) {
 	PrepRW(IORING_OP_READV, sqe, fd, unsafe.Pointer(iov), nrVecs, offset)
 }
-func PrepReadv2(sqe *IoUringSqe, fd int,
-	iov *syscall.Iovec, nrVecs int,
-	offset uint64, flags uint32) {
+func PrepReadv2(sqe *IoUringSqe, fd int, iov *syscall.Iovec, nrVecs int, offset uint64, flags uint32) {
 	PrepReadv(sqe, fd, iov, nrVecs, offset)
 	sqe.SetRwFlags(flags)
 }
@@ -63,14 +59,10 @@ func PrepReadv2(sqe *IoUringSqe, fd int,
 func PrepWrite(sqe *IoUringSqe, fd int, buf *byte, nb int, offset uint64) {
 	PrepRW(IORING_OP_WRITE, sqe, fd, unsafe.Pointer(buf), nb, offset)
 }
-func PrepWritev(sqe *IoUringSqe, fd int,
-	iov *syscall.Iovec, nrVecs int,
-	offset uint64) {
+func PrepWritev(sqe *IoUringSqe, fd int, iov *syscall.Iovec, nrVecs int, offset uint64) {
 	PrepRW(IORING_OP_WRITEV, sqe, fd, unsafe.Pointer(iov), nrVecs, offset)
 }
-func PrepWritev2(sqe *IoUringSqe, fd int,
-	iov *syscall.Iovec, nrVecs int,
-	offset uint64, flags uint32) {
+func PrepWritev2(sqe *IoUringSqe, fd int, iov *syscall.Iovec, nrVecs int, offset uint64, flags uint32) {
 	PrepWritev(sqe, fd, iov, nrVecs, offset)
 	sqe.SetRwFlags(flags)
 }
@@ -93,6 +85,21 @@ func PrepRecvmsg(sqe *IoUringSqe, fd int, msg *syscall.Msghdr, flags uint) {
 func PrepSendmsg(sqe *IoUringSqe, fd int, msg *syscall.Msghdr, flags uint) {
 	PrepRW(IORING_OP_SENDMSG, sqe, fd, unsafe.Pointer(msg), 1, 0)
 	sqe.SetMsgFlags(uint32(flags))
+}
+
+func PrepRecv(sqe *IoUringSqe, fd int, buf *byte, len int, flags uint) {
+	PrepRW(IORING_OP_RECV, sqe, fd, unsafe.Pointer(buf), len, 0)
+	sqe.SetMsgFlags(uint32(flags))
+}
+
+func PrepSend(sqe *IoUringSqe, fd int, buf *byte, len int, flags uint) {
+	PrepRW(IORING_OP_SEND, sqe, fd, unsafe.Pointer(buf), len, 0)
+	sqe.SetMsgFlags(uint32(flags))
+}
+
+func PrepProvideBuffers(sqe *IoUringSqe, addr *uintptr, len, nr, bgid, bid int) {
+	PrepRW(IORING_OP_PROVIDE_BUFFERS, sqe, nr, unsafe.Pointer(addr), len, uint64(bid))
+	sqe.SetBufGroup(uint16(bgid))
 }
 
 // ** Multishot

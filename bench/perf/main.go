@@ -80,7 +80,7 @@ func main() {
 	startTime := time.Now()
 	for i = 0; i < N; i++ {
 		if i%noti == 0 { // notify
-			fmt.Printf("n:%d e:%s\n", j, time.Now().Sub(startTime))
+			fmt.Printf("n:%d e:%s\n", j, time.Since(startTime))
 		}
 
 		for j = 0; j < entries; j++ {
