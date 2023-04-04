@@ -50,3 +50,7 @@ func (h *IoUring) SubmitAndWait(waitNr uint32) (int, error) {
 func (h *IoUring) Advance(nr uint32) {
 	h.io_uring_cq_advance(nr)
 }
+
+func (h *IoUring) RegisterRingFD() (int, error) {
+	return h.io_uring_register_ring_fd()
+}
