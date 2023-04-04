@@ -452,6 +452,8 @@ const (
 	IORING_FEAT_RSRC_TAGS       = (1 << 10)
 	IORING_FEAT_CQE_SKIP        = (1 << 11)
 	IORING_FEAT_LINKED_FILE     = (1 << 12)
+	// for kernel 6.xx
+	IORING_FEAT_REG_REG_RING = (1 << 13)
 )
 
 /*
@@ -495,6 +497,9 @@ const (
 
 	/* this goes last */
 	IORING_REGISTER_LAST
+
+	/* flag added to the opcode to use a registered ring fd */
+	IORING_REGISTER_USE_REGISTERED_RING = 1 << 31
 )
 
 /* io-wq worker categories */

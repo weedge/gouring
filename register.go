@@ -5,6 +5,16 @@ import (
 	"unsafe"
 )
 
+func (ring *IoUring) do_register(opcode uint32, arg unsafe.Pointer, nrArgs uintptr) (ret int, err error) {
+	fd := ring.RingFd
+	if ring.IntFlags&INT_FLAG_REG_REG_RING != 0 {
+		fd = ring.EnterRingFd
+		opcode |= IORING_REGISTER_USE_REGISTERED_RING
+	}
+
+	return io_uring_register(fd, uint32(opcode), arg, nrArgs)
+}
+
 func (ring *IoUring) io_uring_register_buffers_update_tag(off uint32,
 	iov *syscall.Iovec,
 	tags []uint64,
@@ -16,7 +26,7 @@ func (ring *IoUring) io_uring_register_buffers_update_tag(off uint32,
 		Nr:     nr,
 	}
 
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_BUFFERS_UPDATE,
+	ret, err := ring.do_register(IORING_REGISTER_BUFFERS_UPDATE,
 		unsafe.Pointer(up), unsafe.Sizeof(*up))
 	if err != nil {
 		return err
@@ -34,7 +44,7 @@ func (ring *IoUring) io_uring_register_buffers_tags(
 		Data: uint64(uintptr(unsafe.Pointer(iov))),
 		Tags: uint64(uintptr(unsafe.Pointer(&tags[0]))),
 	}
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_BUFFERS2,
+	ret, err := ring.do_register(IORING_REGISTER_BUFFERS2,
 		unsafe.Pointer(reg), unsafe.Sizeof(*reg))
 	if err != nil {
 		return err
@@ -48,7 +58,7 @@ func (ring *IoUring) io_uring_register_buffers_sparse(nr uint32) error {
 		Flags: IORING_RSRC_REGISTER_SPARSE,
 		Nr:    nr,
 	}
-	ret, err := io_uring_register(ring.RingFd, IORING_RSRC_REGISTER_SPARSE,
+	ret, err := ring.do_register(IORING_RSRC_REGISTER_SPARSE,
 		unsafe.Pointer(reg), unsafe.Sizeof(*reg))
 	if err != nil {
 		return err
@@ -58,7 +68,7 @@ func (ring *IoUring) io_uring_register_buffers_sparse(nr uint32) error {
 }
 
 func (ring *IoUring) io_uring_register_buffers(iov *syscall.Iovec, nrIov uint32) int {
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_BUFFERS,
+	ret, err := ring.do_register(IORING_REGISTER_BUFFERS,
 		unsafe.Pointer(iov), uintptr(nrIov))
 	if err != nil {
 		return 0
@@ -67,7 +77,7 @@ func (ring *IoUring) io_uring_register_buffers(iov *syscall.Iovec, nrIov uint32)
 }
 
 func (ring *IoUring) io_uring_unregister_buffers() int {
-	ret, err := io_uring_register(ring.RingFd, IORING_UNREGISTER_BUFFERS, nil, 0)
+	ret, err := ring.do_register(IORING_UNREGISTER_BUFFERS, nil, 0)
 	if err != nil {
 		return 0
 	}
@@ -83,7 +93,7 @@ func (ring *IoUring) io_uring_register_files_update_tag(off uint32,
 		Tags:   uint64(uintptr(unsafe.Pointer(&tags[0]))),
 		Nr:     nrFiles,
 	}
-	return io_uring_register(ring.RingFd, IORING_REGISTER_FILES_UPDATE2,
+	return ring.do_register(IORING_REGISTER_FILES_UPDATE2,
 		unsafe.Pointer(up),
 		unsafe.Sizeof(*up))
 }
@@ -94,7 +104,7 @@ func (ring *IoUring) io_uring_register_files_update(off uint32,
 		Offset: off,
 		Fds:    uint64(uintptr(unsafe.Pointer(&files[0]))),
 	}
-	return io_uring_register(ring.RingFd, IORING_REGISTER_FILES_UPDATE,
+	return ring.do_register(IORING_REGISTER_FILES_UPDATE,
 		unsafe.Pointer(up), uintptr(nrFiles))
 }
 
@@ -105,7 +115,7 @@ func (ring *IoUring) io_uring_register_files_sparse(nr uint32) (ret int, err err
 	}
 	var didIncrease bool
 	for {
-		ret, err = io_uring_register(ring.RingFd, IORING_REGISTER_FILES2,
+		ret, err = ring.do_register(IORING_REGISTER_FILES2,
 			unsafe.Pointer(reg),
 			unsafe.Sizeof(*reg))
 		if err == nil {
@@ -131,7 +141,7 @@ func (ring *IoUring) io_uring_register_files_tags(
 	}
 	var didIncrease bool
 	for {
-		ret, err = io_uring_register(ring.RingFd, IORING_REGISTER_FILES2,
+		ret, err = ring.do_register(IORING_REGISTER_FILES2,
 			unsafe.Pointer(reg), unsafe.Sizeof(*reg))
 		if err == nil {
 			break
@@ -150,7 +160,7 @@ func (ring *IoUring) io_uring_register_files(
 	files []int, nrFiles uint32) (ret int, err error) {
 	var didIncrease bool
 	for {
-		ret, err = io_uring_register(ring.RingFd, IORING_REGISTER_FILES,
+		ret, err = ring.do_register(IORING_REGISTER_FILES,
 			unsafe.Pointer(&files[0]), uintptr(nrFiles))
 		if err == nil {
 			break
@@ -166,7 +176,7 @@ func (ring *IoUring) io_uring_register_files(
 }
 
 func (ring *IoUring) io_uring_unregister_files() int {
-	ret, err := io_uring_register(ring.RingFd, IORING_UNREGISTER_FILES, nil, 0)
+	ret, err := ring.do_register(IORING_UNREGISTER_FILES, nil, 0)
 	if err != nil {
 		return 0
 	}
@@ -174,7 +184,7 @@ func (ring *IoUring) io_uring_unregister_files() int {
 }
 
 func (ring *IoUring) io_uring_unregister_eventfd() int {
-	ret, err := io_uring_register(ring.RingFd, IORING_UNREGISTER_EVENTFD, nil, 0)
+	ret, err := ring.do_register(IORING_UNREGISTER_EVENTFD, nil, 0)
 	if err != nil {
 		return 0
 	}
@@ -182,7 +192,7 @@ func (ring *IoUring) io_uring_unregister_eventfd() int {
 }
 
 func (ring *IoUring) io_uring_register_eventfd_async(eventFd int) int {
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_EVENTFD_ASYNC, nil, 0)
+	ret, err := ring.do_register(IORING_REGISTER_EVENTFD_ASYNC, nil, 0)
 	if err != nil {
 		return 0
 	}
@@ -190,7 +200,7 @@ func (ring *IoUring) io_uring_register_eventfd_async(eventFd int) int {
 }
 
 func (ring *IoUring) io_uring_register_probe(p *IoUringProbe, nrOps uint32) int {
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_PROBE,
+	ret, err := ring.do_register(IORING_REGISTER_PROBE,
 		unsafe.Pointer(p), uintptr(nrOps))
 	if err != nil {
 		return 0
@@ -199,15 +209,15 @@ func (ring *IoUring) io_uring_register_probe(p *IoUringProbe, nrOps uint32) int 
 }
 
 func (ring *IoUring) io_uring_register_personality() (int, error) {
-	return io_uring_register(ring.RingFd, IORING_REGISTER_PERSONALITY, nil, 0)
+	return ring.do_register(IORING_REGISTER_PERSONALITY, nil, 0)
 }
 
 func (ring *IoUring) io_uring_unregister_personality(id int32) (int, error) {
-	return io_uring_register(ring.RingFd, IORING_UNREGISTER_PERSONALITY, nil, uintptr(id))
+	return ring.do_register(IORING_UNREGISTER_PERSONALITY, nil, uintptr(id))
 }
 
 func (ring *IoUring) io_uring_register_restrictions(res *IoUringRestriction, nrRes uint32) int {
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_RESTRICTIONS,
+	ret, err := ring.do_register(IORING_REGISTER_RESTRICTIONS,
 		unsafe.Pointer(res), uintptr(nrRes))
 	if err != nil {
 		return 0
@@ -216,7 +226,7 @@ func (ring *IoUring) io_uring_register_restrictions(res *IoUringRestriction, nrR
 }
 
 func (ring *IoUring) io_uring_enable_rings() error {
-	_, err := io_uring_register(ring.RingFd, IORING_REGISTER_ENABLE_RINGS, nil, 0)
+	_, err := ring.do_register(IORING_REGISTER_ENABLE_RINGS, nil, 0)
 	return err
 }
 
@@ -224,12 +234,12 @@ func (ring *IoUring) io_uring_enable_rings() error {
 // func io_uring_register_iowq_aff(ring *IoUring, cpuSz int, mask *CpuSet) {
 // }
 func (ring *IoUring) io_uring_unregister_iowq_aff() error {
-	_, err := io_uring_register(ring.RingFd, IORING_UNREGISTER_IOWQ_AFF, nil, 0)
+	_, err := ring.do_register(IORING_UNREGISTER_IOWQ_AFF, nil, 0)
 	return err
 }
 
 func (ring *IoUring) io_uring_register_iowq_max_workers(val *uint32) (int, error) {
-	return io_uring_register(ring.RingFd, IORING_REGISTER_IOWQ_MAX_WORKERS,
+	return ring.do_register(IORING_REGISTER_IOWQ_MAX_WORKERS,
 		unsafe.Pointer(val), 2)
 }
 
@@ -238,13 +248,18 @@ func (ring *IoUring) io_uring_register_ring_fd() (int, error) {
 		Data:   uint64(ring.RingFd),
 		Offset: ^uint32(0),
 	}
-	ret, err := io_uring_register(ring.RingFd, IORING_REGISTER_RING_FDS,
-		unsafe.Pointer(up), 1)
+
+	ret, err := ring.do_register(IORING_REGISTER_RING_FDS, unsafe.Pointer(up), 1)
 	if err != nil {
 		return 0, err
 	}
+
 	ring.EnterRingFd = int(up.Offset)
 	ring.IntFlags |= INT_FLAG_REG_RING
+	if ring.Features&IORING_FEAT_REG_REG_RING != 0 {
+		ring.IntFlags |= INT_FLAG_REG_REG_RING
+	}
+
 	return ret, nil
 }
 
@@ -252,25 +267,25 @@ func (ring *IoUring) io_uring_unregister_ring_fd() error {
 	up := &IoUringRsrcUpdate{
 		Offset: uint32(ring.EnterRingFd),
 	}
-	ret, err := io_uring_register(ring.RingFd, IORING_UNREGISTER_RING_FDS,
+	ret, err := ring.do_register(IORING_UNREGISTER_RING_FDS,
 		unsafe.Pointer(up), 1)
 	if err != nil {
 		return err
 	}
 	if ret == 1 {
 		ring.EnterRingFd = ring.RingFd
-		ring.IntFlags &= ^INT_FLAG_REG_RING
+		ring.IntFlags &= ^(INT_FLAG_REG_RING | INT_FLAG_REG_REG_RING)
 	}
 	return nil
 }
 
 func (ring *IoUring) io_uring_register_buf_ring(reg *IoUringBufReg, flags uint32) (int, error) {
-	return io_uring_register(ring.RingFd, IORING_REGISTER_PBUF_RING, unsafe.Pointer(reg), 1)
+	return ring.do_register(IORING_REGISTER_PBUF_RING, unsafe.Pointer(reg), 1)
 }
 
 func (ring *IoUring) io_uring_unregister_buf_ring(bgId int32) (int, error) {
 	reg := &IoUringBufReg{
 		Bgid: uint16(bgId),
 	}
-	return io_uring_register(ring.RingFd, IORING_UNREGISTER_PBUF_RING, unsafe.Pointer(reg), 1)
+	return ring.do_register(IORING_UNREGISTER_PBUF_RING, unsafe.Pointer(reg), 1)
 }
