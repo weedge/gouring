@@ -102,6 +102,12 @@ func PrepProvideBuffers(sqe *IoUringSqe, addr *uintptr, len, nr, bgid, bid int) 
 	sqe.SetBufGroup(uint16(bgid))
 }
 
+// todo byte order (little/big endian)
+func PrepPollAdd(sqe *IoUringSqe, fd int, pollMask uint32) {
+	PrepRW(IORING_OP_POLL_ADD, sqe, fd, nil, 0, 0)
+	sqe.SetPoll32Events(pollMask)
+}
+
 // ** Multishot
 
 func PrepMultishotAccept(sqe *IoUringSqe, fd int, rsa *syscall.RawSockaddrAny, rsaSz *uintptr, flags uint) {
