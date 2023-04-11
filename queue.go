@@ -476,3 +476,7 @@ func (ring *IoUring) io_uring_cqe_seen(cqe *IoUringCqe) {
 		ring.io_uring_cq_advance(1)
 	}
 }
+
+func (ring *IoUring) io_uring_for_each_cqe() {
+
+}

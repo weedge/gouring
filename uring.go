@@ -54,3 +54,7 @@ func (h *IoUring) Advance(nr uint32) {
 func (h *IoUring) RegisterRingFD() (int, error) {
 	return h.io_uring_register_ring_fd()
 }
+
+func (h *IoUring) SubmitAndWaitTimeOut(cqePtr **IoUringCqe, waitNtr uint32, uSec int64, sigmask *Sigset_t) error {
+	return h.io_uring_submit_and_wait_timeout(cqePtr, waitNtr, USecToTimespec(uSec), sigmask)
+}
