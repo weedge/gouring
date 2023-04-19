@@ -39,6 +39,6 @@ func TestUserdata(t *testing.T) {
 
 		var exp [8]byte
 		bo.PutUint64(exp[:], tc.exp)
-		assert.Equal(t, exp[:], u[:])
+		assert.Equal(t, u.GetUint64(), tc.exp)
 	}
 }

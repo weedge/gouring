@@ -134,7 +134,7 @@ func TestRingQueueSubmitSingleConsumer(t *testing.T) {
 					}
 					// cqe data check
 					if int(cqe.Res) < len("data ") {
-						panic(fmt.Sprintf("write less that it should"))
+						panic("write less that it should")
 					}
 					if (cqe.UserData.GetUintptr()>>(8<<2))&0xff == 0x00 {
 						panic(fmt.Sprintf("cqe userdata should contain canonical address got %+#v", cqe.UserData))

@@ -58,3 +58,7 @@ func (h *IoUring) RegisterRingFD() (int, error) {
 func (h *IoUring) SubmitAndWaitTimeOut(cqePtr **IoUringCqe, waitNtr uint32, uSec int64, sigmask *Sigset_t) error {
 	return h.io_uring_submit_and_wait_timeout(cqePtr, waitNtr, USecToTimespec(uSec), sigmask)
 }
+
+func (h *IoUring) PeekBatchCqe(cqes []*IoUringCqe, count uint32) uint32 {
+	return h.io_uring_peek_batch_cqe(cqes, count)
+}
