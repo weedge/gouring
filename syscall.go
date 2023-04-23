@@ -32,7 +32,7 @@ func io_uring_enter2(fd int, toSubmit uint32, minComplete uint32, flags uint32, 
 	return
 }
 
-func io_uring_register(fd int, opcode uint32, arg unsafe.Pointer, nrArgs uintptr) (ret int, err error) {
+func io_uring_register(fd int, opcode uint32, arg unsafe.Pointer, nrArgs uint32) (ret int, err error) {
 	r1, _, e1 := syscall.Syscall6(SYS_IO_URING_REGISTER, uintptr(fd), uintptr(opcode), uintptr(arg), uintptr(nrArgs), 0, 0)
 	ret = int(r1)
 	if e1 != 0 {
