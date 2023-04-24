@@ -45,6 +45,10 @@ func (h *IoUring) PeekBatchCqe(cqes []*IoUringCqe, count uint32) uint32 {
 	return h.io_uring_peek_batch_cqe(cqes, count)
 }
 
+func (h *IoUring) PeekCqe(cqes **IoUringCqe) error {
+	return h.io_uring_peek_cqe(cqes)
+}
+
 /*--- enter ---*/
 
 func (h *IoUring) Submit() (int, error) {
@@ -64,6 +68,10 @@ func (h *IoUring) SubmitAndWaitTimeOut(cqePtr **IoUringCqe, waitNtr uint32, uSec
 }
 
 /*--- register ---*/
+
+func (h *IoUring) RegisterFiles(files []int, nrFiles uint32) (ret int, err error) {
+	return h.io_uring_register_files(files, nrFiles)
+}
 
 func (h *IoUring) RegisterRingFD() (int, error) {
 	return h.io_uring_register_ring_fd()
